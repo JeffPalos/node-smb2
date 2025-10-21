@@ -141,22 +141,66 @@ class Directory extends EventEmitter {
       fileId: this._id
     });
   }
+  
+  async read(): Promise<DirectoryEntry[]> {
+    const allEntries: DirectoryEntry[] = [];
+    const STATUS_NO_MORE_FILES = 0x80000006;
 
-  async read() {
-    const response = await this.tree.request({ type: PacketType.QueryDirectory }, {
-      fileId: this._id,
-      buffer: Buffer.from("*", "ucs2")
-    });
+    while (true) {
+      let response;
 
-    let entries: DirectoryEntry[] = [];
-    if (response.data) {
-      entries = response.data.filter(x => x.filename !== "." && x.filename !== "..")
-    } else {
-      console.warn("response without data", response);
+      try {
+        response = await this.tree.request(
+          { type: PacketType.QueryDirectory },
+          {
+            fileId: this._id,
+            buffer: Buffer.from('*', 'ucs2'),
+          }
+        );
+      } catch (error: any) {
+        // ✅ Normal case: end of file reading
+        if (
+          error.status === STATUS_NO_MORE_FILES ||
+          error.code === 'STATUS_NO_MORE_FILES' ||
+          Number(error?.header?.status) === STATUS_NO_MORE_FILES
+        ) {
+          break;
+        }
+
+        // 🚨 Real error case
+        console.error('❌ Unexpected SMB QueryDirectory error:', error);
+        throw error;
+      }
+
+      const status = Number(response.header?.status);
+
+      // ✅ If the server indicates that there are no more files
+      if (status === STATUS_NO_MORE_FILES) {
+        break;
+      }
+
+      // ✅ If files have been received
+      if (response.data && response.data.length > 0) {
+        const entries = response.data.filter(
+          (x) => x.filename !== '.' && x.filename !== '..'
+        );
+        allEntries.push(...entries);
+      }
+
+      // 🧩 If the directory is empty
+      if (!response.data || response.data.length === 0) {
+        break;
+      }
+
+      // 🛑 Anti-infinite loop safety
+      if (allEntries.length > 200_000) {
+        console.warn('⚠️ Directory.read(): loop stopped, too many entries');
+        break;
+      }
     }
 
-    return entries;
-  }
+  return allEntries;
+}
 
   async exists(path: string) {
     try {
