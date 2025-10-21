@@ -142,7 +142,7 @@ class Directory extends EventEmitter {
     });
   }
   
-  async read(): Promise<DirectoryEntry[]> {
+  async read(recursive: boolean = false, currentPath: string = '', maxDepth: number = 10): Promise<DirectoryEntry[]> {
     const allEntries: DirectoryEntry[] = [];
     const STATUS_NO_MORE_FILES = 0x80000006;
 
@@ -184,7 +184,34 @@ class Directory extends EventEmitter {
         const entries = response.data.filter(
           (x) => x.filename !== '.' && x.filename !== '..'
         );
+        
+        // Add current path to entries for better tracking
+        entries.forEach(entry => {
+          entry.fullPath = currentPath ? `${currentPath}/${entry.filename}` : entry.filename;
+        });
+        
         allEntries.push(...entries);
+
+        // 🔄 Recursive processing if enabled
+        if (recursive && maxDepth > 0) {
+          for (const entry of entries) {
+            // Check if entry is a directory (has Directory attribute)
+            if (entry.fileAttributes & FileAttribute.Directory) {
+              try {
+                const subDirectory = new Directory(this.tree);
+                const subPath = currentPath ? `${currentPath}/${entry.filename}` : entry.filename;
+                
+                await subDirectory.open(entry.fullPath);
+                const subEntries = await subDirectory.read(true, subPath, maxDepth - 1);
+                allEntries.push(...subEntries);
+                await subDirectory.close();
+              } catch (subError: any) {
+                console.warn(`⚠️ Could not read subdirectory ${entry.fullPath}:`, subError.message);
+                // Continue processing other directories instead of failing completely
+              }
+            }
+          }
+        }
       }
 
       // 🧩 If the directory is empty
@@ -199,8 +226,17 @@ class Directory extends EventEmitter {
       }
     }
 
-  return allEntries;
-}
+    return allEntries;
+  }
+
+  /**
+   * Reads directory contents recursively
+   * @param maxDepth Maximum depth to recurse (default: 10)
+   * @returns Promise<DirectoryEntry[]> All entries including subdirectories
+   */
+  async readRecursive(maxDepth: number = 10): Promise<DirectoryEntry[]> {
+    return this.read(true, '', maxDepth);
+  }
 
   async exists(path: string) {
     try {
@@ -232,7 +268,9 @@ class Directory extends EventEmitter {
     buffer.fill(0x00);
     buffer.writeUInt8(1, 0);
     buffer.writeUInt32LE(newPathUCS2.length, 16);
-    buffer.fill(newPathUCS2, 20);
+    for (let i = 0; i < newPathUCS2.length; i++) {
+      buffer[20 + i] = newPathUCS2[i];
+    }
 
     await this.setInfo(FileInfoClass.RenameInformation, buffer);
   }

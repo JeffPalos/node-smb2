@@ -12,4 +12,5 @@ export default interface DirectoryEntry {
   fileId: string;
   filename: string;
   fileAttributes: string[];
+  fullPath?: string; // Added for recursive directory reading
 }
