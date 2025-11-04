@@ -1,25 +1,29 @@
 import smb2 from '../src';
 import Directory from '../src/client/Directory';
+import { loadSMBConfig, displaySMBConfig, validateSMBConfig } from './smbConfig';
 
 // Test simple pour vérifier la fonctionnalité récursive
 async function testRecursiveRead() {
-  const host = 'your-server-address';
-  const domain = 'your-domain';
-  const username = 'your-username';
-  const password = 'your-password';
-  const share = 'your-share';
+  const config = loadSMBConfig();
+  
+  displaySMBConfig(config);
+  
+  if (!validateSMBConfig(config)) {
+    return;
+  }
 
   try {
     console.log('🧪 Test de la lecture récursive...');
     
     // Connexion
-    const client = new smb2.Client(host);
+    const client = new smb2.Client(config.host);
     const session = await client.authenticate({
-      domain,
-      username,
-      password
+      domain: config.domain,
+      username: config.username,
+      password: config.password,
+      forceNtlmVersion: config.forceNtlmVersion
     });
-    const tree = await session.connectTree(share);
+    const tree = await session.connectTree(config.share);
 
     // Test 1: Lecture normale vs récursive
     console.log('\n📁 Test 1: Comparaison normale vs récursive');

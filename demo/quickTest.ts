@@ -1,17 +1,18 @@
 import smb2 from '../src';
+import { loadSMBConfig, displaySMBConfig, validateSMBConfig } from './smbConfig';
 
 /**
  * Exemple simple pour tester et démontrer la correction de la lecture récursive
  */
 async function quickRecursiveTest() {
-  // Configuration - remplacez par vos vraies valeurs
-  const config = {
-    host: 'your-server',
-    domain: 'your-domain',
-    username: 'your-username', 
-    password: 'your-password',
-    share: 'your-share'
-  };
+  // Chargement de la configuration depuis les variables d'environnement
+  const config = loadSMBConfig();
+  
+  displaySMBConfig(config);
+  
+  if (!validateSMBConfig(config)) {
+    return;
+  }
 
   try {
     // Connexion
@@ -19,7 +20,8 @@ async function quickRecursiveTest() {
     const session = await client.authenticate({
       domain: config.domain,
       username: config.username,
-      password: config.password
+      password: config.password,
+      forceNtlmVersion: config.forceNtlmVersion
     });
     const tree = await session.connectTree(config.share);
 

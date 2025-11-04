@@ -80,7 +80,8 @@ async function runDemo(choice: number, config: DemoConfig) {
         const session = await client.authenticate({
           domain: config.domain,
           username: config.username,
-          password: config.password
+          password: config.password,
+          forceNtlmVersion: config.forceNtlmVersion
         });
         const tree = await session.connectTree(config.share);
         await debugRecursiveRead(tree, '/', 2);
@@ -93,7 +94,8 @@ async function runDemo(choice: number, config: DemoConfig) {
         const session2 = await client2.authenticate({
           domain: config.domain,
           username: config.username,
-          password: config.password
+          password: config.password,
+          forceNtlmVersion: config.forceNtlmVersion
         });
         const tree2 = await session2.connectTree(config.share);
         await analyzeDirectoryStructure(tree2, '/', 3);
@@ -128,7 +130,8 @@ async function customTest(config: DemoConfig) {
   const session = await client.authenticate({
     domain: config.domain,
     username: config.username,
-    password: config.password
+    password: config.password,
+    forceNtlmVersion: config.forceNtlmVersion
   });
   const tree = await session.connectTree(config.share);
 

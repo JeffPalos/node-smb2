@@ -1,26 +1,32 @@
 import smb2 from '../src';
 import Directory from '../src/client/Directory';
 import DirectoryEntry from '../src/protocol/models/DirectoryEntry';
+import { loadSMBConfig, displaySMBConfig, validateSMBConfig } from './smbConfig';
 
 // Exemple d'utilisation de la fonction read() récursive
 async function recursiveDirectoryExample() {
-  const host = 'your-server-address';
-  const domain = 'your-domain';
-  const username = 'your-username';
-  const password = 'your-password';
-  const share = 'your-share';
+  // Configuration chargée depuis .env
+  const config = loadSMBConfig();
+  
+  console.log('📁 Configuration SMB:');
+  displaySMBConfig(config);
+  
+  if (!validateSMBConfig(config)) {
+    return;
+  }
 
   try {
-    console.log(`Connecting to ${host}\\${share} as ${domain}\\${username}`);
+    console.log(`\n🔗 Connexion en cours...`);
     
     // Connexion au serveur SMB
-    const client = new smb2.Client(host);
+    const client = new smb2.Client(config.host);
     const session = await client.authenticate({
-      domain,
-      username,
-      password
+      domain: config.domain,
+      username: config.username,
+      password: config.password,
+      forceNtlmVersion: config.forceNtlmVersion
     });
-    const tree = await session.connectTree(share);
+    const tree = await session.connectTree(config.share);
 
     // Ouvrir un répertoire
     const directory = new Directory(tree);

@@ -34,6 +34,7 @@ class Directory extends EventEmitter {
   public watching: boolean = false;
   private watchingMessageIds: bigint[] = [];
   private watchRecursive: boolean;
+  private _path: string = '';
 
   constructor(
     private tree: Tree
@@ -71,6 +72,7 @@ class Directory extends EventEmitter {
 
     this._id = response.body.fileId as string;
     this.isOpen = true;
+    this._path = path;
 
     this.emit("open", this);
   }
@@ -197,16 +199,31 @@ class Directory extends EventEmitter {
           for (const entry of entries) {
             // Check if entry is a directory using the type field
             if (entry.type === 'Directory') {
+              // Construct proper path for opening subdirectory
+              // Clean the filename (remove leading ./ if present)
+              const cleanFilename = entry.filename.startsWith('./') ? entry.filename.slice(2) : entry.filename;
+              
+              // Use the stored base path and append the subdirectory name
+              let directoryPath: string;
+              if (this._path === '/' || this._path === '') {
+                directoryPath = `/${cleanFilename}`;
+              } else {
+                // Ensure _path doesn't end with / and add the subdirectory
+                const basePath = this._path.endsWith('/') ? this._path.slice(0, -1) : this._path;
+                directoryPath = `${basePath}/${cleanFilename}`;
+              }
+
               try {
                 const subDirectory = new Directory(this.tree);
                 const subPath = currentPath ? `${currentPath}/${entry.filename}` : entry.filename;
                 
-                await subDirectory.open(entry.fullPath || entry.filename);
+                await subDirectory.open(directoryPath);
                 const subEntries = await subDirectory.read(true, subPath, maxDepth - 1);
                 allEntries.push(...subEntries);
                 await subDirectory.close();
               } catch (subError: any) {
-                console.warn(`⚠️ Could not read subdirectory ${entry.fullPath || entry.filename}:`, subError.message);
+                const errorMsg = subError?.message || subError?.code || subError?.status || 'Unknown error';
+                console.warn(`⚠️ Could not read subdirectory ${entry.fullPath || entry.filename} (tried path: ${directoryPath}):`, errorMsg);
                 // Continue processing other directories instead of failing completely
               }
             }

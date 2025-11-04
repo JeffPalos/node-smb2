@@ -1,25 +1,29 @@
 import smb2 from '../src';
 import DirectoryEntry from '../src/protocol/models/DirectoryEntry';
+import { loadSMBConfig, displaySMBConfig, validateSMBConfig } from './smbConfig';
 
 // Exemple d'utilisation de la fonctionnalité récursive avec la classe Tree
 async function recursiveTreeExample() {
-  const host = 'your-server-address';
-  const domain = 'your-domain';
-  const username = 'your-username';
-  const password = 'your-password';
-  const share = 'your-share';
+  const config = loadSMBConfig();
+  
+  displaySMBConfig(config);
+  
+  if (!validateSMBConfig(config)) {
+    return;
+  }
 
   try {
-    console.log(`Connecting to ${host}\\${share} as ${domain}\\${username}`);
+    console.log(`Connecting to ${config.host}\\${config.share} as ${config.domain}\\${config.username}`);
     
     // Connexion au serveur SMB
-    const client = new smb2.Client(host);
+    const client = new smb2.Client(config.host);
     const session = await client.authenticate({
-      domain,
-      username,
-      password
+      domain: config.domain,
+      username: config.username,
+      password: config.password,
+      forceNtlmVersion: config.forceNtlmVersion
     });
-    const tree = await session.connectTree(share);
+    const tree = await session.connectTree(config.share);
 
     console.log('🌳 ===== UTILISATION AVEC LA CLASSE TREE =====');
 

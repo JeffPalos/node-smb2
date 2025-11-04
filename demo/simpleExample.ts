@@ -1,22 +1,21 @@
 import smb2 from '../src';
+import { loadSMBConfig, displaySMBConfig, validateSMBConfig } from './smbConfig';
 
 /**
  * Exemple simple et direct pour tester la fonctionnalité récursive
- * Modifiez les valeurs ci-dessous avec vos vraies informations de connexion
+ * Utilise automatiquement les variables d'environnement du fichier .env
+ * Ou modifiez les valeurs dans smbConfig.ts pour des valeurs par défaut
  */
 async function simpleExample() {
-  // 🔧 CONFIGURATION - MODIFIEZ CES VALEURS
-  const config = {
-    host: '192.168.1.100',        // ⬅️ IP de votre serveur SMB
-    domain: 'WORKGROUP',          // ⬅️ Votre domaine (ou WORKGROUP)
-    username: 'user',             // ⬅️ Votre nom d'utilisateur
-    password: 'password',         // ⬅️ Votre mot de passe
-    share: 'shared'               // ⬅️ Nom de votre partage
-  };
+  // 🔧 CONFIGURATION - Chargée depuis .env ou variables d'environnement
+  const config = loadSMBConfig();
 
   console.log('🔗 Connexion au serveur SMB...');
-  console.log(`Host: ${config.host}\\${config.share}`);
-  console.log(`User: ${config.domain}\\${config.username}`);
+  displaySMBConfig(config);
+
+  if (!validateSMBConfig(config)) {
+    return;
+  }
 
   try {
     // Connexion
@@ -24,7 +23,8 @@ async function simpleExample() {
     const session = await client.authenticate({
       domain: config.domain,
       username: config.username,
-      password: config.password
+      password: config.password,
+      forceNtlmVersion: config.forceNtlmVersion
     });
     const tree = await session.connectTree(config.share);
     
