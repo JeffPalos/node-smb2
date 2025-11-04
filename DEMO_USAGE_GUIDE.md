@@ -14,14 +14,31 @@
 
 ### 1. Configuration des variables d'environnement
 
-Créez un fichier `.env` dans le répertoire racine ou définissez ces variables :
+#### Option A: Fichier .env (recommandée)
+Créez ou modifiez le fichier `.env` dans le répertoire racine :
 
 ```bash
-export HOST="votre-serveur-smb"          # Adresse du serveur SMB
-export DOMAIN="votre-domaine"            # Domaine Windows
-export USERNAME="votre-utilisateur"      # Nom d'utilisateur
-export PASSWORD="votre-mot-de-passe"     # Mot de passe
-export SHARE="votre-partage"             # Nom du partage SMB
+# Configuration SMB pour les démos
+HOST=votre-serveur-smb          # Adresse du serveur SMB
+DOMAIN=votre-domaine            # Domaine Windows  
+USERNAME=votre-utilisateur      # Nom d'utilisateur
+PASSWORD=votre-mot-de-passe     # Mot de passe
+SHARE=votre-partage             # Nom du partage SMB
+FORCE_NTLM=v2                   # Version NTLM (optionnel)
+```
+
+#### Option B: Variables d'environnement système
+```bash
+export HOST="votre-serveur-smb"
+export DOMAIN="votre-domaine" 
+export USERNAME="votre-utilisateur"
+export PASSWORD="votre-mot-de-passe"
+export SHARE="votre-partage"
+```
+
+#### Vérification de la configuration
+```bash
+npm run test:env    # Vérifier que les variables .env sont bien chargées
 ```
 
 ### 2. Exécution des démos

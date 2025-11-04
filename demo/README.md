@@ -6,11 +6,14 @@
 # 1. Installer les dépendances
 npm install
 
-# 2. Copier le fichier de configuration d'exemple
+# 2. Créer le fichier .env (si pas déjà fait)
 cp .env.example .env
 
 # 3. Modifier .env avec vos vraies valeurs
 nano .env
+
+# 4. Vérifier que les variables sont bien chargées
+npm run test:env
 ```
 
 ## ⚡ Exécution rapide
@@ -41,11 +44,15 @@ npx ts-node demo/index.ts 2    # Tree examples
 
 ### Via fichier .env (recommandé)
 ```bash
+# Editez le fichier .env
 HOST=192.168.1.100
 DOMAIN=WORKGROUP  
 USERNAME=user
 PASSWORD=password
 SHARE=shared
+
+# Vérifiez que ça fonctionne
+npm run test:env
 ```
 
 ### Via variables d'environnement
