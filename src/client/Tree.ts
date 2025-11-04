@@ -8,6 +8,7 @@ import type Response from "../protocol/smb2/Response";
 import PacketType from "../protocol/smb2/PacketType";
 import DirectoryAccess from "../protocol/smb2/DirectoryAccess";
 import FilePipePrinterAccess from "../protocol/smb2/FilePipePrinterAccess";
+import type DirectoryEntry from "../protocol/models/DirectoryEntry";
 
 interface Tree {
   on(event: "connect" | "disconnect", callback: (tree: Tree) => void): this;
@@ -103,14 +104,24 @@ class Tree extends EventEmitter {
     };
   }
 
-  async readDirectory(path: string = "/") {
+  async readDirectory(path: string = "/", recursive: boolean = false, maxDepth: number = 10): Promise<DirectoryEntry[]> {
     const directory = new Directory(this);
     this.registerDirectory(directory);
 
     await directory.open(path);
-    const entries = await directory.read();
+    const entries = await directory.read(recursive, '', maxDepth);
     await directory.close();
     return entries;
+  }
+
+  /**
+   * Reads directory contents recursively
+   * @param path Path to the directory (default: "/")
+   * @param maxDepth Maximum depth to recurse (default: 10)
+   * @returns Promise<DirectoryEntry[]> All entries including subdirectories
+   */
+  async readDirectoryRecursive(path: string = "/", maxDepth: number = 10): Promise<DirectoryEntry[]> {
+    return this.readDirectory(path, true, maxDepth);
   }
 
   async exists(path: string) {
