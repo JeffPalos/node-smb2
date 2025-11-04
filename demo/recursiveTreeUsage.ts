@@ -165,6 +165,9 @@ export async function analyzeDirectoryStructure(tree: any, path: string = '/', m
   return stats;
 }
 
+// Export recursiveTreeExample for use in other modules
+export { recursiveTreeExample };
+
 // Usage
 if (require.main === module) {
   recursiveTreeExample();
