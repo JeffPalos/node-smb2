@@ -195,18 +195,18 @@ class Directory extends EventEmitter {
         // 🔄 Recursive processing if enabled
         if (recursive && maxDepth > 0) {
           for (const entry of entries) {
-            // Check if entry is a directory (has Directory attribute)
-            if (entry.fileAttributes & FileAttribute.Directory) {
+            // Check if entry is a directory using the type field
+            if (entry.type === 'Directory') {
               try {
                 const subDirectory = new Directory(this.tree);
                 const subPath = currentPath ? `${currentPath}/${entry.filename}` : entry.filename;
                 
-                await subDirectory.open(entry.fullPath);
+                await subDirectory.open(entry.fullPath || entry.filename);
                 const subEntries = await subDirectory.read(true, subPath, maxDepth - 1);
                 allEntries.push(...subEntries);
                 await subDirectory.close();
               } catch (subError: any) {
-                console.warn(`⚠️ Could not read subdirectory ${entry.fullPath}:`, subError.message);
+                console.warn(`⚠️ Could not read subdirectory ${entry.fullPath || entry.filename}:`, subError.message);
                 // Continue processing other directories instead of failing completely
               }
             }
